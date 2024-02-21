@@ -821,6 +821,12 @@ custom_css = '''
             # font-family: "Source Sans Pro", sans-serif;
             margin-bottom: -1.5rem;
         }
+
+        .st-emotion-cache-eqffof {
+            # font-family: "Source Sans Pro", sans-serif;
+            margin-top: -1.5rem;
+        }
+        
         .data-table {
             display: table;
             width: 100%;
