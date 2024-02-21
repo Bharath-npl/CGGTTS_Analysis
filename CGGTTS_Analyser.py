@@ -362,79 +362,66 @@ def convert_to_csv(header, df):
     return output.getvalue()
 
 # Function to caluclate the weighted REFSYS and plot the data of receiver 1 
-def Weight_refsys_plot1(frequency1):
-    # Filter the MJD-filtered data based on the frequency
-    df1_data_filtered = st.session_state['sel_MJD_df_01'][st.session_state['sel_MJD_df_01']['FRC'] == frequency1]
-   
-    st.session_state["sel_MJD_FRC_01"] = df1_data_filtered
+
+
+def Weight_refsys_plot(receiver_id, frequency):
+    # Dynamic key generation based on receiver_id
+    data_frame_key = f'sel_MJD_df_0{receiver_id}'
+    selected_frequency_key = f'selected_frequency{receiver_id}'
+    ref_key = f'REF{receiver_id:02}'
+    gnss_key = f'GNSS{receiver_id}'
+    lab_key = f'LAB{receiver_id}'
+
+    # Update the selected frequency in session state
+    st.session_state[selected_frequency_key] = frequency
+
+    # Access the data frame and filter based on frequency
+    df_data_filtered = st.session_state[data_frame_key][st.session_state[data_frame_key]['FRC'] == frequency]
+    st.session_state[f"sel_MJD_FRC_{receiver_id:02}"] = df_data_filtered
     
     # Calculate sine square of ELV
-    df1_data_filtered['sin2'] = np.sin(np.radians(df1_data_filtered['ELV']/10))**2
-
-    df1_data_filtered['sin2'] = df1_data_filtered.groupby('MJD')['sin2'].transform(lambda x: x / x.sum())
-
+    df_data_filtered['sin2'] = np.sin(np.radians(df_data_filtered['ELV']/10))**2
+    df_data_filtered['sin2'] = df_data_filtered.groupby('MJD')['sin2'].transform(lambda x: x / x.sum())
 
     # Calculate weighted REFSYS value
-    df1_data_filtered['weighted_REFSYS'] = df1_data_filtered['REFSYS'] * df1_data_filtered['sin2']*0.1
+    df_data_filtered['weighted_REFSYS'] = df_data_filtered['REFSYS'] * df_data_filtered['sin2'] * 0.1
 
-    if not df1_data_filtered.empty:
-        Avg_refsys_Rx1 = (df1_data_filtered.groupby("MJD")["weighted_REFSYS"].sum().reset_index())
-        Avg_refsys_Rx1["REFSYS"] = (Avg_refsys_Rx1["weighted_REFSYS"]).round(2)
-        Data01_stdev = Avg_refsys_Rx1["REFSYS"].std()
+    if not df_data_filtered.empty:
+        Avg_refsys = (df_data_filtered.groupby("MJD")["weighted_REFSYS"].sum().reset_index())
+        Avg_refsys["REFSYS"] = (Avg_refsys["weighted_REFSYS"]).round(2)
+        Data_stdev = Avg_refsys["REFSYS"].std()
 
         # Select the start and end MJD from the user selection 
-        min_Rx1 = math.floor(min(Avg_refsys_Rx1["MJD"]))
-        max_Rx1 = math.ceil(max(Avg_refsys_Rx1["MJD"]))
+        min_Rx = math.floor(min(Avg_refsys["MJD"]))
+        max_Rx = math.ceil(max(Avg_refsys["MJD"]))
         
         # Create a scatter plot with Plotly
         fig = go.Figure()
-
-        # Add scatter plot of data points
-        fig.add_trace(go.Scatter(
-            x=Avg_refsys_Rx1["MJD"], 
-            y=Avg_refsys_Rx1["REFSYS"], 
-            mode='markers',
-            name='REFSYS'
-        ))
-
-        # Add a standard deviation annotation to the plot 
-        fig.add_annotation(xref='paper', yref='paper', x=1, y=1, text=f"Std Dev: {Data01_stdev:.2f} ns",
-        showarrow=False, font=dict(size=18, color="black"),
-        xanchor='right', yanchor='top')
-
-           
-        # Update layout for better presentation
-
+        fig.add_trace(go.Scatter(x=Avg_refsys["MJD"], y=Avg_refsys["REFSYS"], mode='markers', name='REFSYS'))
+        fig.add_annotation(xref='paper', yref='paper', x=1, y=1, text=f"Std Dev: {Data_stdev:.2f} ns",
+                           showarrow=False, font=dict(size=18, color="black"), xanchor='right', yanchor='top')
+        
+        # Update layout
         fig.update_layout(
-            title=f"{st.session_state['REF01']} - {st.session_state['GNSS1']}(time) at Lab: {st.session_state['LAB1']} through {st.session_state.selected_frequency1}. (Each point correponds to Sum of all satellite weighted refsys per epoch)",
+            title=f"{st.session_state[ref_key]} - {st.session_state[gnss_key]}(time) at Lab: {st.session_state[lab_key]} through {frequency}. (Each point corresponds to Sum of all satellite weighted refsys per epoch)",
             xaxis_title="MJD",
             yaxis_title="Weighted REFSYS (ns)",
-            yaxis=dict(tickmode='auto', nticks =10),
-            xaxis =dict(tickformat=".2f",  # Set the tick values as original MJD values
-                    # ticktext=formatted_mjd,  # Set the formatted MJD values as tick labels,
-                    tickfont= dict(size=14, color ="black"), 
-                    exponentformat ='none'))
+            yaxis=dict(tickmode='auto', nticks=10),
+            xaxis=dict(tickformat=".2f", tickfont=dict(size=14, color="black"), exponentformat='none')
+        )
         
-        # Display the plot
         st.plotly_chart(fig, use_container_width=True)
 
-        # Create the CSV header and data
-        headerRx1, data_dfRx1 = create_csv_data_Rx(min_Rx1, max_Rx1, Avg_refsys_Rx1,
-                                        st.session_state.selected_frequency1, 1)
- 
-        
-        csv_Rx1 = convert_to_csv(headerRx1, data_dfRx1)
-                
-        # Create a download button
+        # Assuming create_csv_data_Rx and convert_to_csv functions are defined
+        header, data_df = create_csv_data_Rx(min_Rx, max_Rx, Avg_refsys, frequency, receiver_id)
+        csv = convert_to_csv(header, data_df)
         
         st.download_button(
             label="Download REFSYS data",
-            data=csv_Rx1,
-            file_name='Refsys01.csv',
+            data=csv,
+            file_name=f'Refsys{receiver_id:02}.csv',
             mime='text/csv',
         )
-
-
     else:
         st.error("Selected frequency data is not available in the selected MJD range ")
 
@@ -465,13 +452,12 @@ if 'df1_total' in st.session_state and unique_mjd_int_values1:
             # Re-select the frequency after MJD filtering
             selected_frequency1 = st.radio("**Select Frequency**", filtered_unique_frequencies, index=0, key='Frequency1', horizontal=True)
             st.session_state.selected_frequency1= selected_frequency1
-            Weight_refsys_plot1(selected_frequency1)
+            Weight_refsys_plot(1,selected_frequency1)
         else:
             st.error("No valid frequencies available to process the data")
 
 
-# if 'show_plot2' not in st.session_state:
-#     st.session_state['show_plot2'] = False
+
 
 # File uploader and data processing
 with st.form("my-form2", clear_on_submit=True):
@@ -492,78 +478,6 @@ if files_02:
         st.session_state['REF02'] = ', '.join(map(str, processed_data2['REF'].dropna().unique()))
         st.session_state['LAB2'] = ' '.join(map(str, processed_data2['LAB'].dropna().unique()))
 
-
-# Function to caluclate the weighted REFSYS and plot the data of receiver 2
-def Weight_refsys_plot2(frequency2):
-    # Filter the MJD-filtered data based on the frequency
-    df2_data_filtered = st.session_state['sel_MJD_df_02'][st.session_state['sel_MJD_df_02']['FRC'] == frequency2]
-    st.session_state["sel_MJD_FRC_02"] = df2_data_filtered
-    
-    # Calculate sine square of ELV
-    df2_data_filtered['sin2'] = np.sin(np.radians(df2_data_filtered['ELV']/10))**2
-
-    # Normalize weighted REFSYS for each satellite and MJD
-    # We sum the weighted REFSYS for each MJD, then divide each weighted REFSYS by this sum
-    df2_data_filtered['sin2'] = df2_data_filtered.groupby('MJD')['sin2'].transform(lambda x: x / x.sum())
-
-     # Calculate weighted REFSYS value
-    df2_data_filtered['weighted_REFSYS'] = df2_data_filtered['REFSYS'] * df2_data_filtered['sin2']*0.1
-     
-    if not df2_data_filtered.empty:
-        Avg_refsys_Rx2 = (df2_data_filtered.groupby("MJD")["weighted_REFSYS"].sum().reset_index())
-        Avg_refsys_Rx2["REFSYS"] = (Avg_refsys_Rx2["weighted_REFSYS"]).round(2)
-        Data02_stdev = Avg_refsys_Rx2["REFSYS"].std()
-        
-        # Select the start and end MJD from the user selection 
-        min_Rx2 = math.floor(min(Avg_refsys_Rx2["MJD"]))
-        max_Rx2 = math.ceil(max(Avg_refsys_Rx2["MJD"]))
-
-        # Create a scatter plot with Plotly
-        fig = go.Figure()
-
-        # Add scatter plot of data points
-        fig.add_trace(go.Scatter(
-            x=Avg_refsys_Rx2["MJD"], 
-            y=Avg_refsys_Rx2["REFSYS"], 
-            mode='markers',
-            name='REFSYS'
-        ))
-
-        # Add a standard deviation annotation to the plot 
-        fig.add_annotation(xref='paper', yref='paper', x=1, y=1, text=f"Std Dev: {Data02_stdev:.2f} ns",
-        showarrow=False, font=dict(size=18, color="black"),
-        xanchor='right', yanchor='top')
-
-        # Update layout for better presentation
-        fig.update_layout(
-            title=f"{st.session_state['REF02']} - {st.session_state['GNSS2']}(time) at Lab: {st.session_state['LAB2']} through {st.session_state.selected_frequency2} . (Each point correponds to Sum of all satellite weighted refsys per epoch)",
-            xaxis_title="MJD",
-            yaxis_title="Weighted REFSYS (ns)",
-            yaxis=dict(tickmode='auto', nticks =10),
-            xaxis =dict(tickformat=".2f", tickfont= dict(size=14, color ="black"), exponentformat ='none')
-        )
-        
-        # Display the plot
-        st.plotly_chart(fig, use_container_width=True)
-
-        # Create the CSV header and data
-        headerRx2, data_dfRx2 = create_csv_data_Rx(min_Rx2, max_Rx2, Avg_refsys_Rx2,
-                                        st.session_state.selected_frequency2, 2)
- 
-        
-        csv_Rx2 = convert_to_csv(headerRx2, data_dfRx2)
-                
-        # Create a download button
-       
-        st.download_button(
-            label="Download REFSYS data",
-            data=csv_Rx2,
-            file_name='Refsys02.csv',
-            mime='text/csv',
-        )
-
-    else:
-        st.error("No valid frequencies available to process the data")
 
 
 # Read the processed data and provide the user options for selecting the MJD range
@@ -593,7 +507,7 @@ if 'df2_total' in st.session_state and unique_mjd_int_values2:
             # Re-select the frequency after MJD filtering
             selected_frequency2 = st.radio("**Select Frequency**", filtered_unique_frequencies, index=0, key='Frequency2', horizontal=True)
             st.session_state.selected_frequency2= selected_frequency2
-            Weight_refsys_plot2(selected_frequency2)
+            Weight_refsys_plot(2, selected_frequency2)
         else:
             st.error("No valid frequencies available for selection.")
     
@@ -636,7 +550,7 @@ def create_CVSV_data_CSV(starting_mjd, ending_mjd, SVids, frequency1, frequency2
     return header_CV_info, aggregated_data
      
 
-# Function to create the DataFrame for CSV
+# Function to create the DataFrame for CSV for the Coommon View data processed 
 def create_csv_data_CV(starting_mjd, ending_mjd, SVids, frequency1, frequency2, Elv_mask, selected_data):
     # Creating DataFrame for data section
     # x=df3_filtered["MJD_time"], 
@@ -664,7 +578,7 @@ def create_csv_data_CV(starting_mjd, ending_mjd, SVids, frequency1, frequency2, 
     return header_CV_info, data_df
 
 
-# Function to create the DataFrame for CSV
+# Function to create the DataFrame for CSV for the All-in-View data processed 
 def create_csv_data_AV(starting_mjd, ending_mjd, SVids, frequency1, frequency2, Elv_mask, selected_data):
     # Creating DataFrame for data section
     # Format the 'MJD' column to have only 5 digits after the decimal
@@ -852,7 +766,7 @@ def process_plot_AV(df1, df2, selected_svids, unique_SVIDs, unique_MJD_times, El
                     new_row = {'MJD_time': unique_time, 'AV_diff': round(AV_diff_refsys, 2) if AV_diff_refsys else None}
                     AV_data.append(new_row)
                     
-                    # Start of the code for printnting the first epoch of AV
+                    # Start of the code for printnting the first epoch of AV to see the weights 
                     #**********************************************
                     # if print_once ==1:
                     #     data = {
@@ -881,7 +795,7 @@ def process_plot_AV(df1, df2, selected_svids, unique_SVIDs, unique_MJD_times, El
             #     AV_data.append({'MJD_time': unique_time, 'AV_diff': None})
 
                                
-            # Print the required caluclated infromatio in the screen
+            # Print the required caluclated information on the screen
                             
             # st.write(f"Sum of the weights after normalisation at the above (1st) epoch: {round(sum([Norm_weigth1] * df1_filtered.loc[condition1, 'sin2']),2)}")
             # st.write(f"Sum of the weighted refsys of 1st data set at the above (1st) epoch: {round(weighted_sum_df1,2)}")
