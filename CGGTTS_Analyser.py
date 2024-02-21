@@ -1,7 +1,7 @@
 # ********************************* CGGTTS data analyser ***********************
 
 # To run the code in your local system use the following command 
-# streamlit run .\CV_difference_V1.py --server.port 8888
+# streamlit run .\CGGTTS_Analyser.py --server.port 8888
 
 
 import streamlit as st
