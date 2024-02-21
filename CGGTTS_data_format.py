@@ -1,18 +1,14 @@
+
+#################### CGGTTS Data Format Description #######################
+#**************************************************************************
+# To run this program use the following command 
+# streamlit run .\CGGTTS_data_format.py --server.port 8888
+
 import streamlit as st
 
 st.set_page_config(page_title="CGGTTS data format", page_icon=":newspaper:", layout="wide",initial_sidebar_state="collapsed")
 st.title(":clipboard: CGGTTS data format")
 
-# st.header("**Welcome to data format**")
-
-
-# st.text("gzau0660.309")
-
-# # File name text with tooltip
-# tooltip_message = "This is the file name tooltip"
-# file_name_text = f'<div class="file-name" title="{tooltip_message}">gzau0660.309</div>'
-
-# st.set_page_config(initial_sidebar_state="collapsed")
 
 st.markdown(
     """
@@ -26,7 +22,7 @@ st.markdown(
 )
 
 
-# File name text with tooltip
+# File name description in the form of tooltip text 
 file_name_text = '''
 <div class="file-name">gmpt1060.312
     <span class="tooltip-text">
@@ -59,7 +55,7 @@ file_name_text = '''
 
 
 
-# Header text split into lines
+# Header description in the form of tooltip text 
 header_lines = [
     '''<div class="header-line header-line-1">
             <pre>CGGTTS     GENERIC DATA FORMAT VERSION = 2E</pre>
@@ -329,6 +325,7 @@ header_lines = [
     '''<div class="header-line header-line-17"> <span class="tooltip-text">Blank line.</span></div>''']
 
 
+# Label of measurements 
 labels = [[
     "SAT", "CL", "MJD", "STTIME", "TRKL", "ELV", "AZTH", "REFSV", "SRSV", 
     "REFSYS", "SRSYS", "DSG", "IOE", "MDTR", "SMDT", "MDIO", "SMDI", 
@@ -337,6 +334,8 @@ labels = [[
     ".1ns", ".1ps/s", ".1ns","", ".1ns", ".1ps/s", ".1ns", ".1ps/s",
     ".1ns", ".1ps/s", ".1ns", "", "", "", ""]]
 
+
+# Sample recordings of measurments 
 raw_data = """
 G02 FF 60312 000200  780 811 2954    +5065571    -65         -17     -9    3 061   82   -2   50   -1   26  +10   5  0  0 L1C AA
 G03 FF 60312 000200  780 374 2333     -994025   -281         -64    -16    4 095  133  -22   77  -10   67   -1   9  0  0 L1C F3
@@ -361,13 +360,13 @@ G32 FF 60312 001800  780 397  641    +6019669    +23         -88     -9    5 055
 # Split the string into lines and then each line into columns
 data_lines = raw_data.strip().split('\n')
 formatted_data = [line.split() for line in data_lines]
+
 # Prepend labels to the formatted data
 data = labels + formatted_data
 
 
 
-
-# Tool tip text for the Data 
+# Data description in the form of tooltip text 
 
 tooltip_texts = [
     '''<div class="data-column col-1">
@@ -721,7 +720,7 @@ empty_line_html = '''
 '''.format(tooltip_content=Empty_line_tooltip)
 
             
-# Define custom CSS for colored columns with 24 different colors
+# Define custom CSS for all the components in the page 
 custom_css = '''
     <style> 
 
@@ -823,10 +822,10 @@ custom_css = '''
         }
 
         .st-emotion-cache-eqffof {
-            # font-family: "Source Sans Pro", sans-serif;
+            font-family: "Source Sans Pro", sans-serif;
             margin-bottom: -1.5rem;
         }
-        
+
         .data-table {
             display: table;
             width: 100%;
@@ -1094,12 +1093,6 @@ custom_css = '''
 '''
 
 
-# # Insert label rows 
-# data.insert(0, unit_labels)  # Insert the units as the first row
-
-# # Insert the units after the labels row
-# data.insert(1, units)  # Insert the units as the second row
-
 
 transposed_data = list(zip(*data))
 
@@ -1125,31 +1118,10 @@ width_classes = [
     "col-width-21", "col-width-22", "col-width-23", "col-width-24"
 ]
 
-# # Create the formatted data display
-# formatted_data = ""
-# rightmost_column_start = 12
-# # Generate HTML table with tooltips
-# html = "<div class='data-table'>"
-# for row_index, row in enumerate(data):
-#     bg_class = "labels-bg" if row_index == 0 else "units-bg" if row_index == 1 else "data-bg"
-#     html += f"<div class='data-row {bg_class}'>"
-
-#     for i, cell in enumerate(row):
-#         tooltip = tooltip_texts[i] if i < len(tooltip_texts) else ""
-#         # Determine the tooltip position based on column index
-#         tooltip_position_class = "tooltip-text-right" if i >= rightmost_column_start else "tooltip-text-left"
-#         width_class = width_classes[i]  # Use the width class for the current column
-#         html += f"<div class='data-cell {width_class}'>{cell}<span class='{tooltip_position_class}'>{tooltip}</span></div>"
-#     html += "</div>"
-# html += "</div>"
-
-# # Render the table in Streamlit
-# st.markdown(custom_css + html, unsafe_allow_html=True)
 
 
 def CGGTTS_data_format():
     
-
     st.header(" CGGTTS data format: Version 2E ")
     st.subheader ("File name")
 
@@ -1160,12 +1132,6 @@ def CGGTTS_data_format():
 
     header_html = '<div class="header-bg">' + '<br>'.join(header_lines) + '</div>' 
     st.markdown(custom_css + header_html, unsafe_allow_html=True)
-    
-    # #Insert an empty line with background color
-    # empty_line_html = '''
-    # <div style="background-color: #DCDCDC; height: 20px;">
-    # <span class= "tooltiptext"> Empty line indicates the end of the header </span>
-    # </div>'''  # Adjust the color and height as needed
 
     st.markdown(custom_css + empty_line_html, unsafe_allow_html=True)
 
@@ -1190,4 +1156,7 @@ def CGGTTS_data_format():
 
     st.markdown(custom_css + html, unsafe_allow_html=True)
 
-CGGTTS_data_format()
+
+
+if __name__ == "__main__":
+    CGGTTS_data_format()
