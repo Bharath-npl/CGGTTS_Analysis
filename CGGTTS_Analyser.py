@@ -111,7 +111,7 @@ def process_data(files, Receiver):
             # Check if the file name follows the XFLLmodd.ddd format
             if len(filename) >= 1 and filename[0].upper() in ['G', 'R', 'E', 'C', 'J', 'I']:
                 # Determine the GNSS type based on the first character
-                current_gnss = {'G': 'GPS', 'R': 'GLONASS', 'E': 'Galileo', 
+                current_gnss = {'G': 'GPS', 'R': 'GLONASS', 'E': 'GALILEO', 
                                 'C': 'BeiDou', 'J': 'QZSS', 'I': 'IRNSS'}[filename[0].upper()]
 
                 if gnss_type is None:
@@ -403,7 +403,7 @@ def Weight_refsys_plot(receiver_id, frequency):
         
         # Update layout
         fig.update_layout(
-            title=f"{st.session_state[ref_key]} - {st.session_state[gnss_key]}(time) at Lab: {st.session_state[lab_key]} through {frequency}. (Each point corresponds to Sum of all satellite weighted refsys per epoch)",
+            title=f"{st.session_state[ref_key]} - {st.session_state[gnss_key]} time at Lab: {st.session_state[lab_key]} through {frequency}. (Each point corresponds to Sum of all satellite weighted refsys per epoch)",
             xaxis_title="MJD",
             yaxis_title="Weighted REFSYS (ns)",
             yaxis=dict(tickmode='auto', nticks=10),
