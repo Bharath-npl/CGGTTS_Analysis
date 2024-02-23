@@ -96,7 +96,7 @@ def process_data(files, Receiver):
         # A list to store cleaned data across multiple files
         valid_filenames01 = []
         gnss_type = None
-
+        RX = None 
         # Initialize 'GNSS1' in session state if it doesn't exist
         if 'GNSS1' not in st.session_state and Receiver == 1:
             st.session_state['GNSS1'] = None
@@ -237,6 +237,9 @@ def process_data(files, Receiver):
             # Apply the conversion to STTIME and add it to MJD
             df_split['MJD'] += df_split['STTIME'].apply(lambda x: convert_sttime_to_seconds(x))
             df_01['MJD'] = df_split['MJD']
+            if RX == None:
+                st.error(f"**Caution:** The file header doesn't contain the REF time scale connected to the Receiver: file {filename}")
+            
             try: 
                 # Convert other relevant columns to desired datatypes
                 df_01['ELV'] = df_split['ELV'].astype(float)
@@ -564,7 +567,7 @@ def create_csv_data_CV(starting_mjd, ending_mjd, SVids, frequency1, frequency2, 
 
     # Creating header information 
     header_CV_info = (
-        f"#Common View Time Transfer Link Performance between {st.session_state['LAB1']} and {st.session_state['LAB2']}\n"
+        f"#Common View Time Transfer Link Performance {st.session_state['LAB1']} - {st.session_state['LAB2']}\n"
         f"#Start MJD: {starting_mjd}\n"
         f"#End MJD: {ending_mjd}\n"
         f"#Frequency selected for comparision in receiver 1: {frequency1}\n"
@@ -1012,7 +1015,7 @@ if 'sel_MJD_FRC_01' in st.session_state and 'sel_MJD_FRC_02' in st.session_state
 
                     # Set plot titles and labels
                     fig.update_layout(
-                        title=f"{st.session_state['GNSS2']} satellites in common-view between {st.session_state['LAB1']} ({st.session_state.selected_frequency1}) and {st.session_state['LAB2']} ({st.session_state.selected_frequency2}) <br> (Each point corresponds to difference of refsys values for each common satellite in view at each epoch)",
+                        title=f"{st.session_state['GNSS2']} satellites in common-view {st.session_state['LAB1']} ({st.session_state.selected_frequency1}) - {st.session_state['LAB2']} ({st.session_state.selected_frequency2}) <br> (Each point corresponds to difference of refsys values for each common satellite in view at each epoch)",
                         title_font=dict(size=20, color="black"),
                         xaxis_title="MJD",
                         xaxis_title_font=dict(size=16, color="black"),
@@ -1111,7 +1114,7 @@ if 'sel_MJD_FRC_01' in st.session_state and 'sel_MJD_FRC_02' in st.session_state
 
                         # Set plot titles and labels with increased font size and black color
                         fig.update_layout(
-                            title=f" {st.session_state['GNSS2']} Common-View link between {st.session_state['LAB1']} ({st.session_state.selected_frequency1}) and {st.session_state['LAB2']}({st.session_state.selected_frequency2}) <br> (Each point is average of differences between refsys values of all common satellites at each epoch)",
+                            title=f" {st.session_state['GNSS2']} Common-View link {st.session_state['LAB1']} ({st.session_state.selected_frequency1}) - {st.session_state['LAB2']}({st.session_state.selected_frequency2}) <br> (Each point is average of differences between refsys values of all common satellites at each epoch)",
                             title_font=dict(size=20, color="black"),
                             xaxis_title="MJD",
                             xaxis_title_font=dict(size=16, color="black"),
@@ -1225,7 +1228,7 @@ if 'sel_MJD_FRC_01' in st.session_state and 'sel_MJD_FRC_02' in st.session_state
 
                         # Set plot titles and labels with increased font size and black color
                         fig.update_layout(
-                            title=f"{st.session_state['GNSS2']} All-in-View link between {st.session_state['REF01']} ({st.session_state.selected_frequency1}) and {st.session_state['REF02']} ({st.session_state.selected_frequency2}) <br> (Each point is the difference of the average weighted refsys of all satellites in view)",
+                            title=f"{st.session_state['GNSS2']} All-in-View link {st.session_state['REF01']} ({st.session_state.selected_frequency1}) - {st.session_state['REF02']} ({st.session_state.selected_frequency2}) <br> (Each point is the difference of the average weighted refsys of all satellites in view)",
                             title_font=dict(size=20, color="black"),
                             xaxis_title="MJD",
                             xaxis_title_font=dict(size=16, color="black"),
